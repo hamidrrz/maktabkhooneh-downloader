@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+<title>دانلودر مکتب‌خونه</title><link rel="stylesheet" href="styles.css"><script src="renderer.js" defer></script>
+</head>
+<body>
+<header class="top"><span class="mark" aria-hidden="true">↓</span><strong>مکتب‌خونه آفلاین</strong><span class="grow"></span><span id="auth" role="status" class="auth">بررسی نشست</span><button id="settings">تنظیمات</button></header>
+<main>
+<nav class="views" aria-label="بخش‌های برنامه">
+<button id="showLibrary" type="button" aria-pressed="true">دوره‌های ذخیره‌شده</button>
+<button id="showDownloads" type="button" aria-pressed="false">دریافت و مدیریت دانلود</button>
+</nav>
+<section id="libraryView" class="library" aria-labelledby="libraryHeading">
+<h1 id="libraryHeading">دوره‌های ذخیره‌شده</h1>
+<div class="library-tools">
+<label for="libraryPath">پوشهٔ کتابخانه</label>
+<div class="row"><input id="libraryPath" dir="ltr" readonly><button id="pickLibrary" type="button">انتخاب پوشه</button><button id="refreshLibrary" type="button">به‌روزرسانی</button></div>
+<label for="filterLibrary">جست‌وجوی دوره</label>
+<input id="filterLibrary" type="search" placeholder="عنوان یا شناسهٔ دوره">
+</div>
+<p id="libraryNotice" role="status" class="muted"></p>
+<ul id="savedCourses" class="saved-courses"></ul>
+</section>
+<div id="downloadView" hidden>
+<section class="lookup" aria-labelledby="heading"><h1 id="heading">دریافت دوره</h1>
+<form id="lookup"><label for="course">شناسه یا نشانی دوره</label><div class="row"><input id="course" type="text" dir="ltr" placeholder="13633" required autocomplete="off"><button class="primary" id="identify">شناسایی دوره</button></div></form>
+<p id="notice" role="status"></p>
+</section>
+<div class="workspace">
+<section class="outline" aria-labelledby="courseTitle">
+<div class="section-head"><h2 id="courseTitle">سرفصل دوره</h2><span id="courseId"></span></div>
+<p id="stats" class="muted"></p>
+<div class="status-tools"><span class="muted">وضعیت فایل‌های پوشهٔ انتخاب‌شده</span><button id="refreshFiles" type="button" disabled>به‌روزرسانی وضعیت</button></div>
+<div id="tree" class="tree"><p class="empty">پس از شناسایی دوره، فصل‌ها و درس‌ها را اینجا انتخاب کنید.</p></div>
+</section>
+<aside>
+<section class="options" aria-labelledby="optHeading"><h2 id="optHeading">تنظیمات دانلود</h2>
+<fieldset id="options"><label for="output">پوشهٔ کتابخانه</label><div class="row"><input id="output" readonly dir="ltr"><button type="button" id="pick">انتخاب</button></div>
+<label for="quality">کیفیت ویدیو</label><select id="quality"></select>
+<fieldset class="kinds"><legend>نوع محتوا</legend><div id="types"></div></fieldset>
+</fieldset><button id="start" class="primary full" disabled>دانلود موارد انتخاب‌شده</button></section>
+<section class="monitor" aria-labelledby="monitorTitle"><h2 id="monitorTitle">وضعیت دانلود</h2>
+<p id="jobState" role="status">آماده</p><p id="current" class="muted"></p>
+<label for="overall">پیشرفت کل</label><progress id="overall" max="1" value="0"></progress>
+<label for="lesson">پیشرفت فایل درس</label><progress id="lesson" max="1" value="0"></progress>
+<p id="rate" class="muted"></p><p id="counts" class="muted"></p>
+<div class="actions">
+<button id="pause" disabled>مکث</button><button id="resume" disabled>ادامه</button><button id="cancel" disabled>لغو</button><button id="retry" disabled>تلاش دوباره</button>
+<button id="folder" disabled>پوشهٔ دوره</button><button id="index" disabled>نمایهٔ آفلاین</button>
+</div><details class="log"><summary>گزارش عملیات</summary><ol id="logs"></ol></details>
+</section>
+</aside>
+</div>
+</div>
+</main>
+<dialog id="preferences"><form id="prefs">
+<h2>تنظیمات برنامه</h2><label for="email">ایمیل مکتب‌خونه</label><input id="email" type="email" dir="ltr">
+<label for="password">رمز عبور</label><input id="password" type="password" dir="ltr" autocomplete="new-password">
+<label class="check"><input id="automatic" type="checkbox"> ورود خودکار</label>
+<label for="defaultOutput">پوشهٔ پیش‌فرض</label><div class="row"><input id="defaultOutput" readonly dir="ltr"><button type="button" id="pickDefault">انتخاب</button></div>
+<label for="defaultQuality">کیفیت پیش‌فرض</label><select id="defaultQuality"></select>
+<fieldset class="kinds"><legend>محتوای پیش‌فرض</legend><div id="defaultTypes"></div></fieldset>
+<p class="muted">گزارش تشخیصی به‌صورت محلی ذخیره می‌شود و رمز، کوکی و نشانی دانلود را ثبت نمی‌کند.</p><p id="logHealth" role="status" class="problem" hidden>ذخیرهٔ گزارش تشخیصی ممکن نیست. دسترسی و فضای پوشهٔ داده‌های برنامه را بررسی کنید.</p>
+<p id="prefsError" role="status"></p><div class="actions"><button class="primary" id="save">ذخیره</button><button id="importEnv" type="button">وارد کردن فایل تنظیمات</button><button id="openLogs" type="button">پوشهٔ گزارش تشخیصی</button><button id="closePrefs" type="button">بستن</button></div>
+</form></dialog>
+</body></html>

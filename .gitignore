@@ -1,17 +1,19 @@
 # Node
 node_modules/
 *.log
+*.log.[0-9]*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
+dist/
 yarn.lock
 pnpm-lock.yaml
 
 # Env
 .env
-.env.*.local
+.env.*
+!.env.example
 
 # OS
 .DS_Store
@@ -20,10 +22,19 @@ Thumbs.db
 # Output
 download/
 *.part
+*.part.json
+.maktabkhooneh-lock/
+.maktabkhooneh-lock-*/
 
 .history/
 docs/
 backup/
 New Text Document.txt
 signup/
-session.json
+session*.json
+*.dpapi
+*.dpapi.*.tmp
+cookie.txt
+cookies.txt
+cookies.json
+MaktabkhoonehDownloader/

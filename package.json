@@ -1,0 +1,45 @@
+{
+  "name": "maktabkhooneh-downloader",
+  "version": "1.0.0",
+  "description": "Persian desktop course downloader and offline library",
+  "author": "Maktabkhooneh Downloader contributors",
+  "license": "GPL-3.0-only",
+  "private": true,
+  "main": "desktop/main.mjs",
+  "scripts": {
+    "dev": "node desktop/dev.mjs",
+    "test": "node --test",
+    "build": "electron-builder --win --x64"
+  },
+  "dependencies": {
+    "playwright": "^1.58.0"
+  },
+  "devDependencies": {
+    "electron": "^43.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "org.maktabkhooneh.downloader",
+    "productName": "Maktabkhooneh Downloader",
+    "files": [
+      "desktop/**/*",
+      "lib/**/*",
+      "download.mjs",
+      "LICENSE",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "artifactName": "Maktabkhooneh-${version}-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Maktabkhooneh-${version}-Portable.${ext}"
+    }
+  }
+}
