@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -59,7 +59,7 @@ test('catalog lists several local courses and counts complete, missing and parti
   const entry=catalog.courses.find(c=>c.id==='13633');
   assert.deepEqual(entry.counts,{chapters:1,units:1,saved:1,partial:1,pending:2,unavailable:1,bytes:3});
   assert.equal(entry.hasIndex,true);
-  assert.equal(await savedCoursePath(base,entry.key,'index'),path.join(base,'13633','index.html'));
+  assert.equal(await savedCoursePath(base,entry.key,'index'),path.join(await realpath(base),'13633','index.html'));
   assert.equal(await savedCoursePath(base,'99','index'),null);
   assert.equal(await savedCoursePath(base,'../outside','folder'),null);
   assert.deepEqual(await listSavedCourses(path.join(base,'missing')),{courses:[],skipped:0});
