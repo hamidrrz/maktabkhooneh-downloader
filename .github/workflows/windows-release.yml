@@ -1,0 +1,60 @@
+name: Build Windows application
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -cne "v$version") { throw 'Tag must match the package.json version.' }
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run tests
+        run: npm test
+      - name: Build Windows executables
+        run: npm run build -- --publish never
+      - name: Verify and hash release files
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $files = @("dist/Maktabkhooneh-$version-Setup.exe", "dist/Maktabkhooneh-$version-Portable.exe")
+          foreach ($file in $files) {
+            if (!(Test-Path -LiteralPath $file -PathType Leaf) -or (Get-Item -LiteralPath $file).Length -eq 0) { throw "Missing or empty artifact: $file" }
+          }
+          $hashes = foreach ($file in $files) { $hash = Get-FileHash -Algorithm SHA256 -LiteralPath $file; "$($hash.Hash.ToLower())  $([IO.Path]::GetFileName($file))" }
+          [IO.File]::WriteAllLines((Join-Path (Resolve-Path dist) 'SHA256SUMS.txt'), [string[]]$hashes, [Text.UTF8Encoding]::new($false))
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-executables
+          path: |
+            dist/*-Setup.exe
+            dist/*-Portable.exe
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Publish release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          gh release create $env:GITHUB_REF_NAME "dist/Maktabkhooneh-$version-Setup.exe" "dist/Maktabkhooneh-$version-Portable.exe" dist/SHA256SUMS.txt --verify-tag --title "Maktabkhooneh Downloader $version" --notes 'Windows x64: Setup installer and Portable executable. SHA256SUMS.txt contains file hashes.'
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }
