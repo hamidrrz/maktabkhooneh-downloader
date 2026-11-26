@@ -161,3 +161,46 @@ test('rate limiting stops automatic login without opening the browser', async ()
     browser:() => assert.fail('browser must not work around rate limiting')
   }),{status:429});
 });
+
+test('automatic requests consistently identify as a Windows browser across redirects',async()=>{
+  const {client}=await import('../lib/session.mjs');
+  const observed=[];
+  const request=client(()=> 'sessionid=fixture',{delay:0,fetcher:async(url,init)=>{
+    observed.push({ua:init.headers.get('user-agent'),cookie:init.headers.get('cookie'),range:init.headers.get('range')});
+    return observed.length===1 ? new Response(null,{status:302,headers:{Location:'https://cdn.example.test/video'}}) : new Response('data');
+  }});
+  await request('https://maktabkhooneh.org/file',{headers:{Range:'bytes=5-'}});
+  assert.equal(observed.length,2);
+  assert.match(observed[0].ua,/^Mozilla\/5\.0 \(Windows NT 10\.0; Win64; x64\).*Chrome\/\d+\.0\.0\.0 Safari\/537\.36$/);
+  assert.equal(observed[1].ua,observed[0].ua);
+  assert.equal(observed[0].cookie,'sessionid=fixture');
+  assert.equal(observed[1].cookie,null);
+  assert.equal(observed[1].range,'bytes=5-');
+});
+
+test('password login sends the same browser user agent as regular requests',async()=>{
+  const {client}=await import('../lib/session.mjs');
+  let expected;
+  await client(()=>'',{delay:0,fetcher:async(_url,init)=>{expected=init.headers.get('user-agent');return new Response('ok');}})('https://maktabkhooneh.org/');
+  assert.ok(expected);
+  const agents=[];
+  await passwordLogin(credentials,async(url,init)=>{
+    agents.push(new Headers(init.headers).get('user-agent'));
+    if(url.pathname.includes('core-data')) return json({auth:{csrf:'fixture'}});
+    if(url.pathname.endsWith('check-active-user')) return json({status:'success',message:'get-pass'});
+    return json({status:'success'},{'Set-Cookie':'sessionid=fixture; Path=/; Secure'});
+  });
+  assert.deepEqual(agents,[expected,expected,expected]);
+});
+
+test('browser user agent reaches a local HTTP server on the wire',async t=>{
+  const {createServer}=await import('node:http');
+  const {client}=await import('../lib/session.mjs');
+  let seen;
+  const server=createServer((req,res)=>{seen=req.headers['user-agent'];res.end('ok');});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())));
+  const request=client(()=>'',{delay:0,fetcher:(_url,init)=>fetch(`http://127.0.0.1:${server.address().port}/`,init)});
+  assert.equal(await (await request('https://maktabkhooneh.org/')).text(),'ok');
+  assert.match(seen,/Windows NT 10\.0; Win64; x64.*Chrome\/143\.0\.0\.0/);
+});
